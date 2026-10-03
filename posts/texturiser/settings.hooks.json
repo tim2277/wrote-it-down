@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& \"$env:USERPROFILE\\.claude\\hooks\\inject-texture.ps1\"",
+            "shell": "powershell",
+            "timeout": 10,
+            "statusMessage": "Recalling texture"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& \"$env:USERPROFILE\\.claude\\hooks\\texturise.ps1\"",
+            "shell": "powershell",
+            "timeout": 15,
+            "statusMessage": "Texturising session"
+          }
+        ]
+      }
+    ]
+  }
+}
