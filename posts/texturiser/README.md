@@ -20,7 +20,7 @@ When a session ends, the conversation is folded into a small file, `~/.claude/te
 
 End a session, give it a couple of minutes, and `~/.claude/texture.md` should exist. Start a new one and it opens with a continuity note.
 
-To see what a fold would send without calling the model or touching the texture, set `TEXTURISE_DRYRUN=1` and run `texturise.ps1 -PayloadFile <file>`, where the file holds the JSON a `SessionEnd` hook receives (`session_id`, `transcript_path`, `cwd`).
+To see what a fold would send without calling the model or writing anything, set `TEXTURISE_DRYRUN=1` and run `texturise.ps1 -PayloadFile <file>`, where the file holds the JSON a `SessionEnd` hook receives (`session_id`, `transcript_path`, `cwd`).
 
 ## What it creates
 

@@ -20,6 +20,7 @@ $MaxDeltaChars = 60000
 $DryRun        = [bool]$env:TEXTURISE_DRYRUN
 
 function Log($m) {
+  if ($DryRun) { Write-Output $m; return }   # a dry run writes nothing, but still shows what a real run would log
   try { Add-Content -LiteralPath $LogPath -Value ("{0}  {1}" -f (Get-Date).ToString('o'), $m) -Encoding UTF8 } catch {}
 }
 
