@@ -16,8 +16,8 @@ $LogPath       = Join-Path $ClaudeHome 'texturise.log'
 $HistoryDir    = Join-Path $ClaudeHome 'texture-history'
 $KeepHistory   = 30
 $Model         = 'sonnet'    # the alias, so it tracks the latest Sonnet instead of going stale
-$MaxDeltaChars = 2000000     # ~500k tokens, half the 1M window. A backstop, not a budget: an oversized
-                             # fold would fail, never advance its marker, and fail again every session end
+$MaxDeltaChars = 1000000     # ~400k tokens at 2.5 chars/token, well inside the 1M window. A backstop, not a budget:
+                             # an oversized fold would fail, never advance its marker, and fail again every session end
 $DryRun        = [bool]$env:TEXTURISE_DRYRUN
 
 function Log($m) {
@@ -88,7 +88,7 @@ try {
     if ($o.type -eq 'user') {
       if ($o.isMeta) { continue }                      # injected by hooks, not typed
       if ($o.message.content -is [string]) {           # a typed prompt; tool results arrive as arrays
-        if ($o.message.content -match '\A\s*<task-notification>') { continue }   # background agents reporting in, not Tim
+        if ($o.message.content -match '\A\s*<task-notification>') { continue }   # background agents reporting in, not typed
         $userTurns++
         $parts.Add("$($UserName.ToUpper()): " + $o.message.content)
       }
