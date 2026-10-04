@@ -41,4 +41,4 @@ To remove it, delete the two hook entries from `settings.json`, then those four 
 - **It parses Claude Code's transcript files**, which are an internal format that can change in any release.
 - **One session at a time is assumed.** The mutex stops two folds overwriting each other, but two live sessions can't see each other's changes.
 - **Prompts with an image attached are skipped.** Only plain-text user messages count as typed turns.
-- **A long session is truncated** to the last 60,000 characters of conversation. The log says when.
+- **A very long session is truncated** to the last 2,000,000 characters of conversation. The cap is a backstop against a fold too big for the model, not a budget. The log says when.

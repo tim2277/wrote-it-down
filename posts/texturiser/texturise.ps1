@@ -15,8 +15,9 @@ $NoHooksPath   = Join-Path $ClaudeHome 'texturise-nohooks.settings.json'
 $LogPath       = Join-Path $ClaudeHome 'texturise.log'
 $HistoryDir    = Join-Path $ClaudeHome 'texture-history'
 $KeepHistory   = 30
-$Model         = 'claude-sonnet-5'
-$MaxDeltaChars = 60000
+$Model         = 'sonnet'    # the alias, so it tracks the latest Sonnet instead of going stale
+$MaxDeltaChars = 2000000     # ~500k tokens, half the 1M window. A backstop, not a budget: an oversized
+                             # fold would fail, never advance its marker, and fail again every session end
 $DryRun        = [bool]$env:TEXTURISE_DRYRUN
 
 function Log($m) {
@@ -87,6 +88,7 @@ try {
     if ($o.type -eq 'user') {
       if ($o.isMeta) { continue }                      # injected by hooks, not typed
       if ($o.message.content -is [string]) {           # a typed prompt; tool results arrive as arrays
+        if ($o.message.content -match '\A\s*<task-notification>') { continue }   # background agents reporting in, not Tim
         $userTurns++
         $parts.Add("$($UserName.ToUpper()): " + $o.message.content)
       }
@@ -127,14 +129,20 @@ try {
   }
 
   # The fold is a Claude Code session too: without both guards its own SessionEnd would fold it
+  # It is also an agent. Left with tools in the repo's cwd, it "maintained texture.md" by writing one
+  # into that repo's memory dir and replying with a summary. No tools, neutral cwd: stdout is the only way out.
   $env:CLAUDE_TEXTURISE_ACTIVE = '1'
-  $out = $composed | claude -p --model $Model --settings $NoHooksPath 2>$null
-  $env:CLAUDE_TEXTURISE_ACTIVE = $null
+  Push-Location ([System.IO.Path]::GetTempPath())
+  try { $out = $composed | claude -p --model $Model --settings $NoHooksPath --tools '' --strict-mcp-config --no-session-persistence 2>$null }
+  finally { Pop-Location; $env:CLAUDE_TEXTURISE_ACTIVE = $null }
 
   $outStr = (($out -join "`n")).Trim()
   if (-not $outStr) { Log "abort: empty claude output ($repo)"; exit 0 }
   # Anchored: a chatty preamble or code fence must not get injected into every session
-  if ($outStr -notmatch '\Alast_updated:') { Log "abort: output doesn't start with last_updated ($repo)"; exit 0 }
+  if ($outStr -notmatch '\Alast_updated:') {
+    $head = $outStr.Substring(0, [Math]::Min(120, $outStr.Length)) -replace '\s+', ' '
+    Log "abort: output doesn't start with last_updated ($repo): $head"; exit 0
+  }
 
   # The prompt tells the model that cuts are recoverable; this is what makes that true
   if (Test-Path -LiteralPath $TexturePath) {
